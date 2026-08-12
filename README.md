@@ -186,11 +186,13 @@ r.Get("/openapi.yaml", func(w http.ResponseWriter, req *http.Request) {
 **How it works**
 
 spec is just a thin wrapper around Chi.
-•  spec.Router embeds chi.Router
-•  It does not replace Chi
-•  It does not change your handlers
-•  It does not add middleware or runtime overhead
-•  It only records documentation while you register routes
+
+- spec.Router embeds chi.Router
+- It does not replace Chi
+- It does not change your handlers
+- It does not add middleware or runtime overhead
+- It only records documentation while you register routes.
+  
 You keep writing Chi exactly the way you already do.
 Behind the scenes it looks roughly like this:
 
