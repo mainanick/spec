@@ -94,6 +94,20 @@ api.Get("/users/{id}", GetUser).
 
 ```
 
+**Documenting Structs**
+spec builds schemas directly from your Go structs. You rarely need to write extra documentation.
+
+```go
+type CreateUserInput struct {
+    Email    string  `json:"email" doc:"User's email address" example:"alice@example.com"`
+    Name     string  `json:"name" doc:"Full name"`
+    Age      *int    `json:"age,omitempty" doc:"Optional age"`
+    Role     string  `json:"role" enum:"admin,user,guest"`
+    Password string  `json:"-"` // ignored
+}
+
+```
+
 **Advanced**
 
 ```go
