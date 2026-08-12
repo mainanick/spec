@@ -95,6 +95,7 @@ api.Get("/users/{id}", GetUser).
 ```
 
 **Documenting Structs**
+
 spec builds schemas directly from your Go structs. You rarely need to write extra documentation.
 
 ```go
@@ -182,3 +183,37 @@ r.Get("/openapi.yaml", func(w http.ResponseWriter, req *http.Request) {
 })
 
 ```
+**How it works**
+
+spec is just a thin wrapper around Chi.
+•  spec.Router embeds chi.Router
+•  It does not replace Chi
+•  It does not change your handlers
+•  It does not add middleware or runtime overhead
+•  It only records documentation while you register routes
+You keep writing Chi exactly the way you already do.
+Behind the scenes it looks roughly like this:
+
+```go
+type Router struct {
+    chi.Router          // embedded — all Chi methods work normally
+    doc *Document       // collects OpenAPI metadata
+}
+
+func (r *Router) Get(pattern string, h http.HandlerFunc) *Route {
+    r.Router.Get(pattern, h)          // normal Chi registration
+    return &Route{                    // return a lightweight route object
+        method:  "GET",
+        pattern: pattern,
+        doc:     r.doc,
+    }
+}
+
+func (rt *Route) Returns(status int, body any) *Route {
+    // just stores metadata — zero runtime cost
+    rt.doc.addResponse(rt.method, rt.pattern, status, body)
+    return rt
+}
+
+```
+
