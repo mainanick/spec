@@ -219,3 +219,14 @@ func (rt *Route) Returns(status int, body any) *Route {
 
 ```
 
+**Zero request-time cost**
+A normal request (for example GET /users) incurs no cost from spec.
+- No extra middleware
+- No handler wrapping
+- No context values
+- No reflection
+- No allocations related to OpenAPI
+- 
+The request path is pure Chi. All OpenAPI work happens once at registration time. Calling doc.YAML() later only serializes an already-built document.
+
+
