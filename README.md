@@ -9,6 +9,7 @@ No handler changes. No generators.
 ```bash
 go get github.com/mainanick/spec
 ```
+
 **Quickstart**
 ```go
 package main
@@ -21,13 +22,18 @@ import (
 )
 
 func main() {
-    r := spec.NewRouter(
+    c := chi.NewRouter()
+    c.Use(middleware.Logger)
+    c.Use(middleware.Recoverer)
+    
+    r := spec.Wrap(c,
         spec.Title("My API"),
         spec.Version("1.0.0"),
     )
+     r.Get("/users", GetUsers) // normal chi.
 
     r.Get("/users/{id}", GetUser).
-        Returns(200, User{})
+        Returns(200, User{}) //chi with docs
 
     r.Post("/users", CreateUser).
         Body(CreateUserInput{}).
@@ -46,7 +52,38 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 }
 
 ```
+
+spec is just a thin wrapper around Chi.
+
+- ```spec.Router``` embeds ```chi.Router```
+- It does not replace Chi
+- It does not change your handlers
+- It does not add middleware or runtime overhead
+- It only records documentation while you register routes.
+  
+You keep writing Chi exactly the way you already do.
+
 **Typical Usage**
+
+
+**Existing Chi Router**
+
+Already have a Chi router? Just wrap it:
+
+```go
+r := chi.NewRouter()
+r.Use(middleware.Logger)
+r.Use(middleware.Recoverer)
+
+api := spec.Wrap(r,
+    spec.Title("My API"),
+    spec.Version("1.0.0"),
+)
+
+api.Get("/users/{id}", GetUser).
+    Returns(200, User{})
+
+```
 
 ```go
 
@@ -76,23 +113,6 @@ r.Route("/users", func(r spec.Router) {
 
 ```
 
-**Existing Chi Router**
-Already have a Chi router? Just wrap it:
-
-```go
-r := chi.NewRouter()
-r.Use(middleware.Logger)
-r.Use(middleware.Recoverer)
-
-api := spec.Wrap(r,
-    spec.Title("My API"),
-    spec.Version("1.0.0"),
-)
-
-api.Get("/users/{id}", GetUser).
-    Returns(200, User{})
-
-```
 
 **Documenting Structs**
 
@@ -185,15 +205,7 @@ r.Get("/openapi.yaml", func(w http.ResponseWriter, req *http.Request) {
 ```
 **How it works**
 
-spec is just a thin wrapper around Chi.
 
-- spec.Router embeds chi.Router
-- It does not replace Chi
-- It does not change your handlers
-- It does not add middleware or runtime overhead
-- It only records documentation while you register routes.
-  
-You keep writing Chi exactly the way you already do.
 Behind the scenes it looks roughly like this:
 
 ```go
@@ -220,13 +232,14 @@ func (rt *Route) Returns(status int, body any) *Route {
 ```
 
 **Zero request-time cost**
+
 A normal request (for example GET /users) incurs no cost from spec.
 - No extra middleware
 - No handler wrapping
 - No context values
 - No reflection
 - No allocations related to OpenAPI
-- 
-The request path is pure Chi. All OpenAPI work happens once at registration time. Calling doc.YAML() later only serializes an already-built document.
+
+The request path is pure Chi. All OpenAPI work happens once at registration time. Calling doc.YAML() later only serializes an already built document.
 
 
